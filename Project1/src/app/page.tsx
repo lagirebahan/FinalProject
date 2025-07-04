@@ -43,7 +43,7 @@ export default function Home() {
 
   return (
     <main className="p-8 max-w-xl mx-auto text-center">
-      <h1 className="text-3xl font-bold mb-4">♻️ Smart Recycling Advisor</h1>
+      <h1 className="text-3xl font-bold mb-4">Recycling Advisor</h1>
       <input type="file" accept="image/*" onChange={handleImageChange} className="mb-4" />
       <div>
         <img ref={imageRef} alt="Uploaded preview" className="mx-auto w-64 h-64 object-contain border" />

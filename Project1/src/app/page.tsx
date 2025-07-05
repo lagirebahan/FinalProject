@@ -12,6 +12,8 @@ interface Prediction {
 export default function Home() {
   const [model, setModel] = useState<mobilenet.MobileNet | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [aiRecommendation, setAiRecommendation] = useState<string>("");
+  const [disposalInstruction, setDisposalInstruction] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
   const imageRef = useRef<HTMLImageElement>(null);
@@ -36,16 +38,14 @@ export default function Home() {
     if (!event.target.files || event.target.files.length === 0) return;
 
     const file = event.target.files[0];
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file");
       return;
     }
-    
-    // Validate file size (max 5MB)
+
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size too large. Please select an image under 5MB');
+      alert("File size too large. Please select an image under 5MB");
       return;
     }
 
@@ -54,6 +54,8 @@ export default function Home() {
     reader.onload = async () => {
       const imageUrl = reader.result as string;
       setImagePreview(imageUrl);
+      setAiRecommendation("");
+      setDisposalInstruction("");
 
       if (imageRef.current) {
         imageRef.current.src = imageUrl;
@@ -64,6 +66,77 @@ export default function Home() {
             try {
               const results = await model.classify(imageRef.current);
               setPredictions(results);
+
+              const label = results[0].className.toLowerCase();
+              let hasOrganic = false;
+              let hasInorganicRecyclable = false;
+              let hasInorganicNonRecyclable = false;
+
+              if (
+                label.includes("banana") ||
+                label.includes("apple") ||
+                label.includes("food") ||
+                label.includes("fruit") ||
+                label.includes("orange")
+              ) {
+                hasOrganic = true;
+              }
+              if (
+                label.includes("plastic") ||
+                label.includes("bottle") ||
+                label.includes("can") ||
+                label.includes("metal") ||
+                label.includes("paper") ||
+                label.includes("cardboard") ||
+                label.includes("box") ||
+                label.includes("newspaper") ||
+                label.includes("envelope")
+              ) {
+                hasInorganicRecyclable = true;
+              }
+              if (
+                label.includes("styrofoam") ||
+                label.includes("diaper") ||
+                label.includes("cigarette") ||
+                label.includes("ashtray")
+              ) {
+                hasInorganicNonRecyclable = true;
+              }
+
+              let typeDesc: string[] = [];
+              if (hasOrganic) typeDesc.push("organic waste (e.g., food)");
+              if (hasInorganicRecyclable) typeDesc.push("inorganic recyclable waste (e.g., plastic/paper)");
+              if (hasInorganicNonRecyclable) typeDesc.push("non-recyclable waste (e.g., styrofoam)");
+
+              let recommendation = "";
+              if (hasOrganic && hasInorganicRecyclable) {
+                recommendation = "Pisahkan: komposkan bagian organik dan daur ulang bagian anorganik.";
+              } else if (hasOrganic) {
+                recommendation = "Komposkan sampah organik jika memungkinkan.";
+              } else if (hasInorganicRecyclable) {
+                recommendation = "Masukkan ke tempat daur ulang atau bawa ke bank sampah terdekat.";
+              } else if (hasInorganicNonRecyclable) {
+                recommendation = "Buang sampah ini ke tempat sampah biasa karena tidak dapat didaur ulang.";
+              } else {
+                recommendation = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
+              }
+
+              const finalMessage = `This seems to have ${typeDesc.join(" and ")}. It is recommended to: ${recommendation}`;
+              setAiRecommendation(finalMessage);
+
+              let disposal = "";
+              if (hasOrganic && hasInorganicRecyclable) {
+                disposal = "Pisahkan sampah organik dan anorganik. Komposkan sisa makanan dan daur ulang item seperti plastik dan kertas.";
+              } else if (hasOrganic) {
+                disposal = "Buang ke tempat kompos atau gunakan komposter rumah untuk sisa makanan.";
+              } else if (hasInorganicRecyclable) {
+                disposal = "Masukkan ke tempat daur ulang atau bawa ke bank sampah terdekat.";
+              } else if (hasInorganicNonRecyclable) {
+                disposal = "Buang ke tempat sampah biasa. Hindari mencampur dengan sampah lain.";
+              } else {
+                disposal = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
+              }
+              setDisposalInstruction(disposal);
             } catch (error) {
               console.error("Error classifying image:", error);
             } finally {
@@ -80,6 +153,8 @@ export default function Home() {
   const clearImage = () => {
     setImagePreview("");
     setPredictions([]);
+    setAiRecommendation("");
+    setDisposalInstruction("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -176,6 +251,20 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {aiRecommendation && (
+              <div className="mt-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-md text-green-800">
+                <p className="font-semibold">♻️ Saran Pembuangan:</p>
+                <p>{aiRecommendation}</p>
+              </div>
+            )}
+
+            {disposalInstruction && (
+              <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md text-yellow-800">
+                <p className="font-semibold">🗑️ Cara Membuang:</p>
+                <p>{disposalInstruction}</p>
+              </div>
+            )}
           </div>
         )}
 

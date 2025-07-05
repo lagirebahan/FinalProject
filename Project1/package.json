@@ -1,12 +1,15 @@
 {
-  "name": "project1",
-  "version": "0.1.0",
+  "name": "recycling-advisor",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-powered recycling guidance application",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.23.3",
@@ -26,5 +29,9 @@
     "eslint-config-next": "15.3.4",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }

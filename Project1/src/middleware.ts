@@ -1,6 +1,16 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-export default clerkMiddleware()
+// Define protected routes (if you want to protect certain pages)
+const isProtectedRoute = createRouteMatcher([
+  // Add protected routes here if needed
+  // '/dashboard(.*)',
+  // '/profile(.*)',
+])
+
+export default clerkMiddleware((auth, req) => {
+  // Protect routes if they match the protected pattern
+  if (isProtectedRoute(req)) auth().protect()
+})
 
 export const config = {
   matcher: [

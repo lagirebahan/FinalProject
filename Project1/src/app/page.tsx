@@ -90,7 +90,9 @@ export default function Home() {
                 label.includes("cardboard") ||
                 label.includes("box") ||
                 label.includes("newspaper") ||
-                label.includes("envelope")
+                label.includes("envelope") ||
+                label.includes("plastic bag") ||
+                label.includes("umbrella")
               ) {
                 hasInorganicRecyclable = true;
               }
@@ -104,9 +106,9 @@ export default function Home() {
               }
 
               let typeDesc: string[] = [];
-              if (hasOrganic) typeDesc.push("organic waste (e.g., food)");
-              if (hasInorganicRecyclable) typeDesc.push("inorganic recyclable waste (e.g., plastic/paper)");
-              if (hasInorganicNonRecyclable) typeDesc.push("non-recyclable waste (e.g., styrofoam)");
+              if (hasOrganic) typeDesc.push("sampah organik (misalnya sisa makanan)");
+              if (hasInorganicRecyclable) typeDesc.push("sampah anorganik yang dapat didaur ulang (misalnya plastik atau kertas)");
+              if (hasInorganicNonRecyclable) typeDesc.push("sampah yang tidak dapat didaur ulang (misalnya styrofoam)");
 
               let recommendation = "";
               if (hasOrganic && hasInorganicRecyclable) {
@@ -121,7 +123,7 @@ export default function Home() {
                 recommendation = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
               }
 
-              const finalMessage = `This seems to have ${typeDesc.join(" and ")}. It is recommended to: ${recommendation}`;
+              const finalMessage = typeDesc.length > 0 ? `Gambar ini tampaknya mengandung ${typeDesc.join(" dan ")}. Disarankan untuk: ${recommendation}`: recommendation;
               setAiRecommendation(finalMessage);
 
               let disposal = "";

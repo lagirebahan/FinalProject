@@ -34,6 +34,100 @@ export default function Home() {
     loadModel();
   }, []);
 
+  useEffect(() => {
+    const classifyImage = async () => {
+      if (model && imageRef.current && imagePreview) {
+        setIsLoading(true);
+        try {
+          const results = await model.classify(imageRef.current);
+          setPredictions(results);
+
+          const label = results[0].className.toLowerCase();
+          let hasOrganic = false;
+          let hasInorganicRecyclable = false;
+          let hasInorganicNonRecyclable = false;
+
+          if (
+            label.includes("banana") ||
+            label.includes("apple") ||
+            label.includes("food") ||
+            label.includes("fruit") ||
+            label.includes("orange")
+          ) {
+            hasOrganic = true;
+          }
+          if (
+            label.includes("plastic") ||
+            label.includes("bottle") ||
+            label.includes("can") ||
+            label.includes("metal") ||
+            label.includes("paper") ||
+            label.includes("cardboard") ||
+            label.includes("box") ||
+            label.includes("newspaper") ||
+            label.includes("envelope") ||
+            label.includes("plastic bag") ||
+            label.includes("umbrella")
+          ) {
+            hasInorganicRecyclable = true;
+          }
+          if (
+            label.includes("styrofoam") ||
+            label.includes("diaper") ||
+            label.includes("cigarette") ||
+            label.includes("ashtray")
+          ) {
+            hasInorganicNonRecyclable = true;
+          }
+
+          let typeDesc: string[] = [];
+          if (hasOrganic) typeDesc.push("sampah organik (misalnya sisa makanan)");
+          if (hasInorganicRecyclable) typeDesc.push("sampah anorganik yang dapat didaur ulang (misalnya plastik atau kertas)");
+          if (hasInorganicNonRecyclable) typeDesc.push("sampah yang tidak dapat didaur ulang (misalnya styrofoam)");
+
+          let recommendation = "";
+          if (hasOrganic && hasInorganicRecyclable) {
+            recommendation = "Pisahkan: komposkan bagian organik dan daur ulang bagian anorganik.";
+          } else if (hasOrganic) {
+            recommendation = "Komposkan sampah organik jika memungkinkan.";
+          } else if (hasInorganicRecyclable) {
+            recommendation = "Masukkan ke tempat daur ulang atau bawa ke bank sampah terdekat.";
+          } else if (hasInorganicNonRecyclable) {
+            recommendation = "Buang sampah ini ke tempat sampah biasa karena tidak dapat didaur ulang.";
+          } else {
+            recommendation = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
+          }
+
+          const finalMessage = typeDesc.length > 0
+            ? `Gambar ini tampaknya mengandung ${typeDesc.join(" dan ")}. Disarankan untuk: ${recommendation}`
+            : recommendation;
+          setAiRecommendation(finalMessage);
+
+          let disposal = "";
+          if (hasOrganic && hasInorganicRecyclable) {
+            disposal = "Pisahkan sampah organik dan anorganik. Komposkan sisa makanan dan daur ulang item seperti plastik dan kertas.";
+          } else if (hasOrganic) {
+            disposal = "Buang ke tempat kompos atau gunakan komposter rumah untuk sisa makanan.";
+          } else if (hasInorganicRecyclable) {
+            disposal = "Masukkan ke tempat daur ulang atau bawa ke bank sampah terdekat.";
+          } else if (hasInorganicNonRecyclable) {
+            disposal = "Buang ke tempat sampah biasa. Hindari mencampur dengan sampah lain.";
+          } else {
+            disposal = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
+          }
+          setDisposalInstruction(disposal);
+        } catch (error) {
+          console.error("Error classifying image:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    classifyImage();
+  }, [imagePreview, model]);
+
+
   const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) return;
 
@@ -59,93 +153,6 @@ export default function Home() {
 
       if (imageRef.current) {
         imageRef.current.src = imageUrl;
-
-        imageRef.current.onload = async () => {
-          if (model && imageRef.current) {
-            setIsLoading(true);
-            try {
-              const results = await model.classify(imageRef.current);
-              setPredictions(results);
-
-              const label = results[0].className.toLowerCase();
-              let hasOrganic = false;
-              let hasInorganicRecyclable = false;
-              let hasInorganicNonRecyclable = false;
-
-              if (
-                label.includes("banana") ||
-                label.includes("apple") ||
-                label.includes("food") ||
-                label.includes("fruit") ||
-                label.includes("orange")
-              ) {
-                hasOrganic = true;
-              }
-              if (
-                label.includes("plastic") ||
-                label.includes("bottle") ||
-                label.includes("can") ||
-                label.includes("metal") ||
-                label.includes("paper") ||
-                label.includes("cardboard") ||
-                label.includes("box") ||
-                label.includes("newspaper") ||
-                label.includes("envelope") ||
-                label.includes("plastic bag") ||
-                label.includes("umbrella")
-              ) {
-                hasInorganicRecyclable = true;
-              }
-              if (
-                label.includes("styrofoam") ||
-                label.includes("diaper") ||
-                label.includes("cigarette") ||
-                label.includes("ashtray")
-              ) {
-                hasInorganicNonRecyclable = true;
-              }
-
-              let typeDesc: string[] = [];
-              if (hasOrganic) typeDesc.push("sampah organik (misalnya sisa makanan)");
-              if (hasInorganicRecyclable) typeDesc.push("sampah anorganik yang dapat didaur ulang (misalnya plastik atau kertas)");
-              if (hasInorganicNonRecyclable) typeDesc.push("sampah yang tidak dapat didaur ulang (misalnya styrofoam)");
-
-              let recommendation = "";
-              if (hasOrganic && hasInorganicRecyclable) {
-                recommendation = "Pisahkan: komposkan bagian organik dan daur ulang bagian anorganik.";
-              } else if (hasOrganic) {
-                recommendation = "Komposkan sampah organik jika memungkinkan.";
-              } else if (hasInorganicRecyclable) {
-                recommendation = "Masukkan ke tempat daur ulang atau bawa ke bank sampah terdekat.";
-              } else if (hasInorganicNonRecyclable) {
-                recommendation = "Buang sampah ini ke tempat sampah biasa karena tidak dapat didaur ulang.";
-              } else {
-                recommendation = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
-              }
-
-              const finalMessage = typeDesc.length > 0 ? `Gambar ini tampaknya mengandung ${typeDesc.join(" dan ")}. Disarankan untuk: ${recommendation}`: recommendation;
-              setAiRecommendation(finalMessage);
-
-              let disposal = "";
-              if (hasOrganic && hasInorganicRecyclable) {
-                disposal = "Pisahkan sampah organik dan anorganik. Komposkan sisa makanan dan daur ulang item seperti plastik dan kertas.";
-              } else if (hasOrganic) {
-                disposal = "Buang ke tempat kompos atau gunakan komposter rumah untuk sisa makanan.";
-              } else if (hasInorganicRecyclable) {
-                disposal = "Masukkan ke tempat daur ulang atau bawa ke bank sampah terdekat.";
-              } else if (hasInorganicNonRecyclable) {
-                disposal = "Buang ke tempat sampah biasa. Hindari mencampur dengan sampah lain.";
-              } else {
-                disposal = "Jenis sampah tidak dikenali. Mohon coba gambar lain.";
-              }
-              setDisposalInstruction(disposal);
-            } catch (error) {
-              console.error("Error classifying image:", error);
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        };
       }
     };
 
